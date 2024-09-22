@@ -1,15 +1,17 @@
 #include <immintrin.h>
+#include <omp.h>
 
 const char* dgemm_desc = "My awesome dgemm.";
 
 void square_dgemm(const int M, const double *A, const double *B, double *C)
 {
 
-    const int block_size = 64;
+    const int block_size = 32;
 
     int i, j, k, ii, jj, kk;
 
     // loop over blocks
+    #pragma omp parallel for private(i, j, k, ii, jj, kk) schedule(static)
     for (kk = 0; kk < M; kk += block_size)
     {
         for (jj = 0; jj < M; jj += block_size)
@@ -23,11 +25,11 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
 
                 for (j = jj; j < j_end; ++j)
                 {
-                    for (i = ii; i < i_end; i += 4)
+                    for (i = ii; i < i_end; i += 8)
                     {
                         // handle edge case where less then 4 elements
                         int remaining = M - i;
-                        if (remaining < 4)
+                        if (remaining < 8)
                         {
                             for (int ir = i; ir < M; ++ir)
                             {
@@ -42,18 +44,18 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
                         }
 
                         // load i:i+3 elements from C
-                        __m256d c_vec = _mm256_loadu_pd(&C[j*M + i]);
+                        __m512d c_vec = _mm512_loadu_pd(&C[j*M + i]);
 
                         for (k = kk; k < k_end; ++k)
                         {
                             // load elements from A and B
-                            __m256d a_vec = _mm256_loadu_pd(&A[k*M + i]);
+                            __m512d a_vec = _mm512_loadu_pd(&A[k*M + i]);
 
-                            __m256d b_val = _mm256_set1_pd(B[j*M + k]);
+                            __m512d b_val = _mm512_set1_pd(B[j*M + k]);
 
-                            c_vec = _mm256_fmadd_pd(a_vec, b_val, c_vec);
+                            c_vec = _mm512_fmadd_pd(a_vec, b_val, c_vec);
                         }
-                        _mm256_storeu_pd(&C[j*M + i], c_vec);
+                        _mm512_storeu_pd(&C[j*M + i], c_vec);
                     }
                 }
             }
