@@ -27,11 +27,21 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
                 {
                     for (i = ii; i < i_end; i += 8)
                     {
-                        // handle edge case where less then 4 elements
                         int remaining = M - i;
                         if (remaining < 8)
                         {
-                            for (int ir = i; ir < M; ++ir)
+                            if (remaining >= 4) {
+                                // Use AVX-256 for 4 remaining elements
+                                __m256d c_vec256 = _mm256_loadu_pd(&C[j*M + i]);
+                                for (k = kk; k < k_end; ++k) {
+                                    __m256d a_vec256 = _mm256_loadu_pd(&A[k*M + i]);
+                                    __m256d b_val256 = _mm256_set1_pd(B[j*M + k]);
+                                    c_vec256 = _mm256_fmadd_pd(a_vec256, b_val256, c_vec256);
+                                }
+                                _mm256_storeu_pd(&C[j*M + i], c_vec256);
+                            }
+                            // Handle remaining scalar elements...
+                            for (int ir = i + (remaining >= 4 ? 4 : 0); ir < M; ++ir)
                             {
                                 double cij = C[j*M + ir];
                                 for (k = kk; k < k_end; ++k)
@@ -42,17 +52,12 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
                             }
                             break;
                         }
-
-                        // load i:i+3 elements from C
+                        // AVX-512 code for 8 elements
                         __m512d c_vec = _mm512_loadu_pd(&C[j*M + i]);
-
                         for (k = kk; k < k_end; ++k)
                         {
-                            // load elements from A and B
                             __m512d a_vec = _mm512_loadu_pd(&A[k*M + i]);
-
                             __m512d b_val = _mm512_set1_pd(B[j*M + k]);
-
                             c_vec = _mm512_fmadd_pd(a_vec, b_val, c_vec);
                         }
                         _mm512_storeu_pd(&C[j*M + i], c_vec);
