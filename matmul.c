@@ -15,7 +15,6 @@
 #include <float.h>
 #include <math.h>
 #include <omp.h>
-#include <xmmintrin.h>
 
 #ifndef COMPILER
 #  define COMPILER "unknown"
@@ -231,9 +230,9 @@ int main(int argc, char** argv)
         exit(3);
     }
     
-    double* A = (double*) _mm_malloc(MAX_SIZE * MAX_SIZE * sizeof(double), 64);
-    double* B = (double*) _mm_malloc(MAX_SIZE * MAX_SIZE * sizeof(double), 64);
-    double* C = (double*) _mm_malloc(MAX_SIZE * MAX_SIZE * sizeof(double), 64);
+    double* A = (double*) malloc(MAX_SIZE * MAX_SIZE * sizeof(double));
+    double* B = (double*) malloc(MAX_SIZE * MAX_SIZE * sizeof(double));
+    double* C = (double*) malloc(MAX_SIZE * MAX_SIZE * sizeof(double));
 
     matrix_init(A);
     matrix_init(B);
