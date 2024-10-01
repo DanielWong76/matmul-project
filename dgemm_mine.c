@@ -2,41 +2,41 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <xmmintrin.h>
+// #include <xmmintrin.h>
 
 const char* dgemm_desc = "My awesome dgemm.";
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
 // 16x6 matrix multiply kernel
-void micro_kernel_16(const double* A, const double* B, double* C, int i, int j, int M, int K, __mmask8 maskBot, __mmask8 maskTop, int remCols)
+void micro_kernel_16(const double* A, const double* B, double* C, int i, int j, int M, int K, __mmask8 maskBot, __mmask8 maskTop, int remCols, int remRows)
 {
     __m512d c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, b_pack, a0_pack, a1_pack;
 
     __m512d zeros = _mm512_setzero_pd();
 
-    if (remCols == 0) return;
+    // if (remCols <= 0) return;
 
     // Top 8 columns
-    c0 = _mm512_mask_load_pd(zeros, maskTop, &C[j * M + i]);
-    c1 = _mm512_mask_load_pd(zeros, maskTop, &C[(j + 1) * M + i]);
-    c2 = _mm512_mask_load_pd(zeros, maskTop, &C[(j + 2) * M + i]);
-    c3 = _mm512_mask_load_pd(zeros, maskTop, &C[(j + 3) * M + i]);
-    c4 = _mm512_mask_load_pd(zeros, maskTop, &C[(j + 4) * M + i]);
-    c5 = _mm512_mask_load_pd(zeros, maskTop, &C[(j + 5) * M + i]);
+    c0 = _mm512_mask_loadu_pd(zeros, maskTop, &C[j * M + i]);
+    c1 = _mm512_mask_loadu_pd(zeros, maskTop, &C[(j + 1) * M + i]);
+    c2 = _mm512_mask_loadu_pd(zeros, maskTop, &C[(j + 2) * M + i]);
+    c3 = _mm512_mask_loadu_pd(zeros, maskTop, &C[(j + 3) * M + i]);
+    c4 = _mm512_mask_loadu_pd(zeros, maskTop, &C[(j + 4) * M + i]);
+    c5 = _mm512_mask_loadu_pd(zeros, maskTop, &C[(j + 5) * M + i]);
 
-    // Bottom 8 columns
-    c6 = _mm512_mask_load_pd(zeros, maskBot, &C[j * M + (i + 8)]);
-    c7 = _mm512_mask_load_pd(zeros, maskBot, &C[(j + 1) * M + (i + 8)]);
-    c8 = _mm512_mask_load_pd(zeros, maskBot, &C[(j + 2) * M + (i + 8)]);
-    c9 = _mm512_mask_load_pd(zeros, maskBot, &C[(j + 3) * M + (i + 8)]);
-    c10 = _mm512_mask_load_pd(zeros, maskBot, &C[(j + 4) * M + (i + 8)]);   
-    c11 = _mm512_mask_load_pd(zeros, maskBot, &C[(j + 5) * M + (i + 8)]);
+    // Bottom 8 column
+    c6 = _mm512_mask_loadu_pd(zeros, maskBot, &C[j * M + (i + 8)]);
+    c7 = _mm512_mask_loadu_pd(zeros, maskBot, &C[(j + 1) * M + (i + 8)]);
+    c8 = _mm512_mask_loadu_pd(zeros, maskBot, &C[(j + 2) * M + (i + 8)]);
+    c9 = _mm512_mask_loadu_pd(zeros, maskBot, &C[(j + 3) * M + (i + 8)]);
+    c10 = _mm512_mask_loadu_pd(zeros, maskBot, &C[(j + 4) * M + (i + 8)]);   
+    c11 = _mm512_mask_loadu_pd(zeros, maskBot, &C[(j + 5) * M + (i + 8)]);
 
     for (int k = 0; k < K; ++k)
     {
-        a0_pack = _mm512_mask_load_pd(zeros, maskTop, &A[k * M + i]);
-        a1_pack = _mm512_mask_load_pd(zeros, maskBot, &A[k * M + (i + 8)]);
+        a0_pack = _mm512_mask_loadu_pd(zeros, maskTop, &A[k * M + i]);
+        a1_pack = _mm512_mask_loadu_pd(zeros, maskBot, &A[k * M + (i + 8)]);
 
         b_pack = _mm512_set1_pd(B[j * M + k]);
         c0 = _mm512_fmadd_pd(a0_pack, b_pack, c0);
@@ -70,22 +70,22 @@ void micro_kernel_16(const double* A, const double* B, double* C, int i, int j, 
 
     // Save the C_block back
 
-    _mm512_mask_store_pd(&C[j * M + i], maskTop, c0);
-    _mm512_mask_store_pd(&C[(j + 1) * M + i], maskTop, c1);
-    _mm512_mask_store_pd(&C[(j + 2) * M + i], maskTop, c2);
-    _mm512_mask_store_pd(&C[(j + 3) * M + i], maskTop, c3);
-    _mm512_mask_store_pd(&C[(j + 4) * M + i], maskTop, c4);
-    _mm512_mask_store_pd(&C[(j + 5) * M + i], maskTop, c5);
+    _mm512_mask_storeu_pd(&C[j * M + i], maskTop, c0);
+    _mm512_mask_storeu_pd(&C[(j + 1) * M + i], maskTop, c1);
+    _mm512_mask_storeu_pd(&C[(j + 2) * M + i], maskTop, c2);
+    _mm512_mask_storeu_pd(&C[(j + 3) * M + i], maskTop, c3);
+    _mm512_mask_storeu_pd(&C[(j + 4) * M + i], maskTop, c4);
+    _mm512_mask_storeu_pd(&C[(j + 5) * M + i], maskTop, c5);
 
-    _mm512_mask_store_pd(&C[j * M + (i + 8)], maskBot, c6);
-    _mm512_mask_store_pd(&C[(j + 1) * M + (i + 8)], maskBot, c7);
-    _mm512_mask_store_pd(&C[(j + 2) * M + (i + 8)], maskBot, c8);
-    _mm512_mask_store_pd(&C[(j + 3) * M + (i + 8)], maskBot, c9);
-    _mm512_mask_store_pd(&C[(j + 4) * M + (i + 8)], maskBot, c10);
-    _mm512_mask_store_pd(&C[(j + 5) * M + (i + 8)], maskBot, c11);
+    _mm512_mask_storeu_pd(&C[j * M + (i + 8)], maskBot, c6);
+    _mm512_mask_storeu_pd(&C[(j + 1) * M + (i + 8)], maskBot, c7);
+    _mm512_mask_storeu_pd(&C[(j + 2) * M + (i + 8)], maskBot, c8);
+    _mm512_mask_storeu_pd(&C[(j + 3) * M + (i + 8)], maskBot, c9);
+    _mm512_mask_storeu_pd(&C[(j + 4) * M + (i + 8)], maskBot, c10);
+    _mm512_mask_storeu_pd(&C[(j + 5) * M + (i + 8)], maskBot, c11);
 }
 
-void avx512mult(const double *A_block, const double *B_block, double *C_block, int M, int i_end, int j_end, int k_end, int jj, int ii) 
+void avx512mult(const double * restrict A_block, const double * restrict B_block, double * restrict C_block, int M, int i_end, int j_end, int k_end, int jj, int ii) 
 {
     int i, j;
 
@@ -100,6 +100,7 @@ void avx512mult(const double *A_block, const double *B_block, double *C_block, i
             // Create masks
             // Define mask variables for AVX-512
             __mmask8 mask0, mask1; // Another 8-element mask
+            __mmask8 col_mask = 0x3F; // Column mask, initially assume 6 columns (0b111111)
 
             // If `m` is not 16, create a mask that only allows the first `m` elements to be loaded
             if (remRows >= 16)
@@ -118,7 +119,12 @@ void avx512mult(const double *A_block, const double *B_block, double *C_block, i
                 mask1 = 0x00;
             }
 
-            micro_kernel_16(A_block, B_block, C_block, i, j, M, k_end, mask1, mask0, remCols);
+            // Handle partial columns
+            if (remCols < 6) {
+                col_mask = (1U << remCols) - 1;  // Create a mask for the remaining columns
+            }
+
+            micro_kernel_16(A_block, B_block, C_block, i, j, M, k_end, mask1, mask0, remCols, remRows);
         }
     }
 }
@@ -130,7 +136,7 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
     const int block_size1 = 96;
     const int block_size2 = 192;
     // size_t alignment = 64;
-    // size_t block_bytes = block_size1 * block_size1 * sizeof(double);
+    size_t block_bytes = block_size1 * block_size1 * sizeof(double);
 
     int ii, jj, kk;
 
@@ -144,12 +150,12 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
     {
         for (ii = 0; ii < M; ii += block_size1)
         {
-            for (kk = 0; kk < M; kk += block_size2)
+            for (kk = 0; kk < M; kk += block_size1)
             {
                 
                 int j_end = min(block_size1, M - jj);
                 int i_end = min(block_size1, M - ii);
-                int k_end = min(block_size2, M - kk);
+                int k_end = min(block_size1, M - kk);
 
                 // // Copy A_block
                 // memset(A_block, 0, block_bytes);
