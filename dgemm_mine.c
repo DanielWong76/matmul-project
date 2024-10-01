@@ -42,30 +42,82 @@ void micro_kernel_16(const double* A, const double* B, double* C, int i, int j, 
         c0 = _mm512_fmadd_pd(a0_pack, b_pack, c0);
         c6 = _mm512_fmadd_pd(a1_pack, b_pack, c6);
 
-        if (remCols == 1) continue;
-        b_pack = _mm512_set1_pd(B[(j + 1) * M + k]);
-        c1 = _mm512_fmadd_pd(a0_pack, b_pack, c1);
-        c7 = _mm512_fmadd_pd(a1_pack, b_pack, c7);
+        if (remCols > 6)
+        {
+            b_pack = _mm512_set1_pd(B[(j + 1) * M + k]);
+            c1 = _mm512_fmadd_pd(a0_pack, b_pack, c1);
+            c7 = _mm512_fmadd_pd(a1_pack, b_pack, c7);
 
-        if (remCols == 2) continue;
-        b_pack = _mm512_set1_pd(B[(j + 2) * M + k]);
-        c2 = _mm512_fmadd_pd(a0_pack, b_pack, c2);
-        c8 = _mm512_fmadd_pd(a1_pack, b_pack, c8);
+            b_pack = _mm512_set1_pd(B[(j + 2) * M + k]);
+            c2 = _mm512_fmadd_pd(a0_pack, b_pack, c2);
+            c8 = _mm512_fmadd_pd(a1_pack, b_pack, c8);
 
-        if (remCols == 3) continue;
-        b_pack = _mm512_set1_pd(B[(j + 3) * M + k]);
-        c3 = _mm512_fmadd_pd(a0_pack, b_pack, c3);
-        c9 = _mm512_fmadd_pd(a1_pack, b_pack, c9);
+            b_pack = _mm512_set1_pd(B[(j + 3) * M + k]);
+            c3 = _mm512_fmadd_pd(a0_pack, b_pack, c3);
+            c9 = _mm512_fmadd_pd(a1_pack, b_pack, c9);
 
-        if (remCols == 4) continue;
-        b_pack = _mm512_set1_pd(B[(j + 4) * M + k]);
-        c4 = _mm512_fmadd_pd(a0_pack, b_pack, c4);
-        c10 = _mm512_fmadd_pd(a1_pack, b_pack, c10);
+            b_pack = _mm512_set1_pd(B[(j + 4) * M + k]);
+            c4 = _mm512_fmadd_pd(a0_pack, b_pack, c4);
+            c10 = _mm512_fmadd_pd(a1_pack, b_pack, c10);
 
-        if (remCols == 5) continue;
-        b_pack = _mm512_set1_pd(B[(j + 5) * M + k]);
-        c5 = _mm512_fmadd_pd(a0_pack, b_pack, c5);
-        c11 = _mm512_fmadd_pd(a1_pack, b_pack, c11);
+            b_pack = _mm512_set1_pd(B[(j + 5) * M + k]);
+            c5 = _mm512_fmadd_pd(a0_pack, b_pack, c5);
+            c11 = _mm512_fmadd_pd(a1_pack, b_pack, c11);
+        }
+        else
+        {
+            switch (remCols)
+            {
+            case 6:
+                b_pack = _mm512_set1_pd(B[(j + 5) * M + k]);
+                c5 = _mm512_fmadd_pd(a0_pack, b_pack, c5);
+                c11 = _mm512_fmadd_pd(a1_pack, b_pack, c11);
+            case 5:
+                b_pack = _mm512_set1_pd(B[(j + 4) * M + k]);
+                c4 = _mm512_fmadd_pd(a0_pack, b_pack, c4);
+                c10 = _mm512_fmadd_pd(a1_pack, b_pack, c10);
+            case 4:
+                b_pack = _mm512_set1_pd(B[(j + 3) * M + k]);
+                c3 = _mm512_fmadd_pd(a0_pack, b_pack, c3);
+                c9 = _mm512_fmadd_pd(a1_pack, b_pack, c9);
+            case 3:
+                b_pack = _mm512_set1_pd(B[(j + 2) * M + k]);
+                c2 = _mm512_fmadd_pd(a0_pack, b_pack, c2);
+                c8 = _mm512_fmadd_pd(a1_pack, b_pack, c8);
+            case 2:
+                b_pack = _mm512_set1_pd(B[(j + 1) * M + k]);
+                c1 = _mm512_fmadd_pd(a0_pack, b_pack, c1);
+                c7 = _mm512_fmadd_pd(a1_pack, b_pack, c7);
+                break;
+            default:
+                break;
+            }
+        }
+
+        // if (remCols == 1) continue;
+        // b_pack = _mm512_set1_pd(B[(j + 1) * M + k]);
+        // c1 = _mm512_fmadd_pd(a0_pack, b_pack, c1);
+        // c7 = _mm512_fmadd_pd(a1_pack, b_pack, c7);
+
+        // if (remCols == 2) continue;
+        // b_pack = _mm512_set1_pd(B[(j + 2) * M + k]);
+        // c2 = _mm512_fmadd_pd(a0_pack, b_pack, c2);
+        // c8 = _mm512_fmadd_pd(a1_pack, b_pack, c8);
+
+        // if (remCols == 3) continue;
+        // b_pack = _mm512_set1_pd(B[(j + 3) * M + k]);
+        // c3 = _mm512_fmadd_pd(a0_pack, b_pack, c3);
+        // c9 = _mm512_fmadd_pd(a1_pack, b_pack, c9);
+
+        // if (remCols == 4) continue;
+        // b_pack = _mm512_set1_pd(B[(j + 4) * M + k]);
+        // c4 = _mm512_fmadd_pd(a0_pack, b_pack, c4);
+        // c10 = _mm512_fmadd_pd(a1_pack, b_pack, c10);
+
+        // if (remCols == 5) continue;
+        // b_pack = _mm512_set1_pd(B[(j + 5) * M + k]);
+        // c5 = _mm512_fmadd_pd(a0_pack, b_pack, c5);
+        // c11 = _mm512_fmadd_pd(a1_pack, b_pack, c11);
     }
 
     // Save the C_block back
