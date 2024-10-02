@@ -10,8 +10,8 @@ LD=gfortran
 PYTHON=python3
 
 # Compiler optimization flags.  You will definitely want to play with these!
-OPTFLAGS = -O3 -mavx512f -mfma -march=native
-CFLAGS = 
+OPTFLAGS = -mavx512cd -mfma -march=native -O3
+CFLAGS = -funroll-loops
 FFLAGS =
 LDFLAGS = -fopenmp
 
