@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-// #include <xmmintrin.h>
 
 const char* dgemm_desc = "My awesome dgemm.";
 
@@ -93,31 +92,6 @@ void micro_kernel_16(const double* A, const double* B, double* C, int i, int j, 
                 break;
             }
         }
-
-        // if (remCols == 1) continue;
-        // b_pack = _mm512_set1_pd(B[(j + 1) * M + k]);
-        // c1 = _mm512_fmadd_pd(a0_pack, b_pack, c1);
-        // c7 = _mm512_fmadd_pd(a1_pack, b_pack, c7);
-
-        // if (remCols == 2) continue;
-        // b_pack = _mm512_set1_pd(B[(j + 2) * M + k]);
-        // c2 = _mm512_fmadd_pd(a0_pack, b_pack, c2);
-        // c8 = _mm512_fmadd_pd(a1_pack, b_pack, c8);
-
-        // if (remCols == 3) continue;
-        // b_pack = _mm512_set1_pd(B[(j + 3) * M + k]);
-        // c3 = _mm512_fmadd_pd(a0_pack, b_pack, c3);
-        // c9 = _mm512_fmadd_pd(a1_pack, b_pack, c9);
-
-        // if (remCols == 4) continue;
-        // b_pack = _mm512_set1_pd(B[(j + 4) * M + k]);
-        // c4 = _mm512_fmadd_pd(a0_pack, b_pack, c4);
-        // c10 = _mm512_fmadd_pd(a1_pack, b_pack, c10);
-
-        // if (remCols == 5) continue;
-        // b_pack = _mm512_set1_pd(B[(j + 5) * M + k]);
-        // c5 = _mm512_fmadd_pd(a0_pack, b_pack, c5);
-        // c11 = _mm512_fmadd_pd(a1_pack, b_pack, c11);
     }
 
     // Save the C_block back
@@ -163,17 +137,17 @@ void avx512mult(const double * restrict A_block, const double * restrict B_block
             else if (remRows > 8) {
                 // Calculate the masks
                 mask0 = 0xFF;
-                mask1 = (1U << (remRows - 8)) - 1;  // Second mask for the lower half, if `m < 16`
+                mask1 = (1 << (remRows - 8)) - 1;  // Second mask for the lower half, if `m < 16`
             }
             else
             {
-                mask0 = (1U << remRows) - 1;
+                mask0 = (1 << remRows) - 1;
                 mask1 = 0x00;
             }
 
             // Handle partial columns
             if (remCols < 6) {
-                col_mask = (1U << remCols) - 1;  // Create a mask for the remaining columns
+                col_mask = (1 << remCols) - 1;  // Create a mask for the remaining columns
             }
 
             micro_kernel_16(A_block, B_block, C_block, i, j, M, k_end, mask1, mask0, remCols, remRows);
@@ -186,9 +160,9 @@ void square_dgemm(const int M, const double *A, const double *B, double *C)
 {
 
     const int block_size1 = 96;
-    const int block_size2 = 192;
+    // const int block_size2 = 192;
     // size_t alignment = 64;
-    size_t block_bytes = block_size1 * block_size1 * sizeof(double);
+    // size_t block_bytes = block_size1 * block_size1 * sizeof(double);
 
     int ii, jj, kk;
 
